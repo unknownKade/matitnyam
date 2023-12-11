@@ -76,4 +76,11 @@ public class Restaurant {
         return new RestaurantListResponse(id, name, latitude, longitude);
     }
 
+    public boolean checkDuplicate(Restaurant restaurant) {
+        boolean isSameDistrict = district == restaurant.district;
+        boolean isSameLongitude = longitude.doubleValue() == restaurant.longitude;
+        boolean isSameLatitude = latitude.doubleValue() == restaurant.latitude;
+
+        return isSameDistrict && isSameLongitude && isSameLatitude;
+    }
 }

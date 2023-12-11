@@ -11,8 +11,10 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface RestaurantRepository extends CrudRepository<Restaurant, Long>, JpaSpecificationExecutor<Restaurant> {
 
-    @EntityGraph(attributePaths = {"region", "reviews"})
+    @EntityGraph(attributePaths = {"district", "reviews"})
     Optional<Restaurant> findById(Long id);
+
+    Restaurant findByNameAndAddress(String name, String address);
 
     List<Restaurant> findAll(Specification<Restaurant> specification, Sort sort);
 }
