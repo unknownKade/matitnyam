@@ -69,7 +69,11 @@ public class Restaurant {
     }
 
     public RestaurantDetailResponse toDetailResponse(){
-        return new RestaurantDetailResponse(id, name, district, address, latitude, longitude);
+        return new RestaurantDetailResponse(id, name, district, address, latitude, longitude, reviews
+                .stream()
+                .map(Review::toDto)
+                .toList()
+        );
     }
 
     public RestaurantListResponse toListResponse(){
