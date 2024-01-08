@@ -1,79 +1,41 @@
 package com.wandted.matitnyam.user.service;
 
-import com.wandted.matitnyam.security.token.Token;
-import com.wandted.matitnyam.security.token.TokenProvider;
-import com.wandted.matitnyam.user.domain.User;
-import com.wandted.matitnyam.user.dto.LoginRequest;
+import com.wandted.matitnyam.common.DataException.NoDataException;
+import com.wandted.matitnyam.user.domain.CustomUser;
+import com.wandted.matitnyam.user.dto.UserCreateRequest;
+import com.wandted.matitnyam.user.dto.UserDetailResponse;
+import com.wandted.matitnyam.user.dto.UserUpdateRequest;
 import com.wandted.matitnyam.user.repository.UserRepository;
-import io.jsonwebtoken.ExpiredJwtException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
+@Transactional
 @Service
-public class UserService{
+public class UserService {
 
     private final UserRepository userRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
-    private final TokenProvider tokenProvider;
-    private final RedisTemplate<String, String> redisTemplate;
 
-    //로그인시 새 RefreshToken, AccessToken 발급
-    public Token handleLogin(LoginRequest loginRequest){
-        User user = loadUserById(loginRequest.id());
-
-        if(!passwordEncoder.matches(loginRequest.password(), user.getPassword())){
-            throw new BadCredentialsException(loginRequest.id());
-        }
-
-        return generateNewToken(user);
+    @Transactional(readOnly = true)
+    public UserDetailResponse getUserDetail(String userId){
+        return userRepository.findByIdAndIsActiveIsTrue(userId)
+                .orElseThrow(()-> new NoDataException("사용자 정보가 없습니다"))
+                .toDto();
     }
 
-    //RefreshToken대조 후 AccessToken 재발급
-    public String handleRefresh(Token token){
-        String userId = tokenProvider.getUserId(token.getRefreshToken());
-
-        if(!checkRefreshToken(userId, token.getRefreshToken())){
-            throw new BadCredentialsException(token.getRefreshToken());
-        }
-
-        User user= loadUserById(userId);
-        return tokenProvider.generateToken(user, true);
+    public void updateUserDetail(UserUpdateRequest userUpdateRequest){
+        userRepository.findByIdAndIsActiveIsTrue(userUpdateRequest.id())
+                .orElseThrow(()-> new NoDataException("사용자 정보가 없습니다"))
+                .updateUser(userUpdateRequest);
     }
 
-    //로그아웃시 RefreshToken 삭제
-    public void handleLogout(Token token){
-        try{
-            tokenProvider.getUserId(token.getRefreshToken());
-        }catch (ExpiredJwtException e){
-            redisTemplate.delete(e.getClaims().getId());
-        }
-    }
+    public void createUserDetail(UserCreateRequest userCreateRequest){
+        userRepository.findById(userCreateRequest.id())
+                .ifPresent( user -> {
+                    throw new NoDataException("유효하지 않은 ID 입니다");
+                });
 
-    private User loadUserById(String username) throws UsernameNotFoundException {
-        return userRepository.findById(username)
-                .orElseThrow(() -> new UsernameNotFoundException(username));
-    }
-
-    private boolean checkRefreshToken(String userId, String refreshToken){
-        return redisTemplate.opsForValue()
-                .get(userId)
-                .equals(refreshToken);
-    }
-
-    private Token generateNewToken(User user){
-        Token token = new Token();
-
-        token.setAccessToken(tokenProvider.generateToken(user, true));
-        token.setRefreshToken(tokenProvider.generateToken(user, false));
-
-        redisTemplate.opsForValue()
-                .set(user.getId(), token.getRefreshToken());
-
-        return token;
+        userRepository.save(CustomUser.create(userCreateRequest));
     }
 }

@@ -1,7 +1,7 @@
 package com.wandted.matitnyam.security.token;
 
 import com.wandted.matitnyam.security.CustomAuthenticationToken;
-import com.wandted.matitnyam.user.domain.User;
+import com.wandted.matitnyam.user.domain.CustomUser;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
@@ -64,10 +64,10 @@ public class TokenProvider {
     }
 
     //토큰에 필요한 사용자 정보 담기
-    public String generateToken(User user, boolean isAccessToken){
+    public String generateToken(CustomUser customUser, boolean isAccessToken){
         Claims claims = Jwts.claims()
                 .setAudience(TokenProperties.TOKEN_AUDIENCE)
-                .setSubject(user.getId())
+                .setSubject(customUser.getId())
                 .setExpiration(Date.from(
                         Instant
                                 .now()
@@ -76,11 +76,11 @@ public class TokenProvider {
                 ));
 
         if(isAccessToken){
-            claims.put("username", user.getUsername());
-            claims.put("role",user.getRole());
-            claims.put("longitude",user.getLongitude());
-            claims.put("latitude",user.getLatitude());
-            claims.put("recommend",user.getUseRecommendLunch());
+            claims.put("username", customUser.getUsername());
+            claims.put("role", customUser.getRole());
+            claims.put("longitude", customUser.getLongitude());
+            claims.put("latitude", customUser.getLatitude());
+            claims.put("recommend", customUser.getUseRecommendLunch());
         }
 
         return Jwts.builder()

@@ -3,7 +3,7 @@ package com.wandted.matitnyam.security;
 import com.wandted.matitnyam.security.token.Token;
 import com.wandted.matitnyam.security.token.TokenCode;
 import com.wandted.matitnyam.security.token.TokenProvider;
-import com.wandted.matitnyam.user.service.UserService;
+import com.wandted.matitnyam.user.service.UserLoginService;
 import com.wandted.matitnyam.util.SetCookieUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -22,7 +22,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class CustomAuthenticationFilter extends OncePerRequestFilter {
     private final TokenProvider tokenProvider;
-    private final UserService userService;
+    private final UserLoginService userLoginService;
 
     private final String loginURI = "/user/login";
 
@@ -31,7 +31,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
         boolean isLogin = request.getRequestURI().equals(loginURI) && request.getMethod().equals(HttpMethod.POST.name());
 
         //로그인 외 요청에서 토큰 체크
-        if(!isLogin){
+//        if(!isLogin){
             Token token = getTokenFromRequest(request);
             TokenCode tokenCode = tokenProvider.validateToken(token.getAccessToken());
 
@@ -47,12 +47,12 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
             //AccessToken이 만료된 경우 RefreshToken 확인
             if (tokenCode == TokenCode.EXPIRED_TOKEN){
                 if(tokenProvider.validateToken(token.getRefreshToken()).equals(TokenCode.VALID_TOKEN)){
-                    response.addCookie(SetCookieUtil.setTokenCookie(userService.handleRefresh(token), true));
+                    response.addCookie(SetCookieUtil.setTokenCookie(userLoginService.handleRefresh(token), true));
                 }else{
-                    userService.handleLogout(token);
+                    userLoginService.handleLogout(token);
                 }
             }
-        }
+//        }
 
         filterChain.doFilter(request, response);
     }
