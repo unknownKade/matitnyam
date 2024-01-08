@@ -13,7 +13,7 @@ import jakarta.persistence.Table;
 @Table(name = "tb_district")
 @Entity
 public class District{
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
     private String name;

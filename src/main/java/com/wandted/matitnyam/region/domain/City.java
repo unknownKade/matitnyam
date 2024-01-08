@@ -13,7 +13,7 @@ import java.util.List;
 @Entity
 public class City {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
     public Long id;
 
     public String name;
